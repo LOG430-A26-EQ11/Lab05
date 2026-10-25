@@ -114,11 +114,14 @@ def request_payment_link(order_id, total_amount, user_id):
 
     # TODO: Requête à POST /payments
     print("")
-    response_from_payment_service = requests.post("http://api-gateway:8080/payments-api/payments",
-        json=payment_transaction,
-        headers={"Content-Type": "application/json"})
-
-    if response_from_payment_service.status_code == 200:
+    try:
+        response_from_payment_service = requests.post("http://api-gateway:8080/payments-api/payments",
+            json=payment_transaction,
+            headers={"Content-Type": "application/json"})
+    except requests.exceptions.RequestException as e:
+        print(f"Error occurred while making request to payment service: {e}")
+        return None
+    else:
         payment_id = response_from_payment_service.json().get("payment_id")
         print(f"ID paiement: {payment_id}")
 
