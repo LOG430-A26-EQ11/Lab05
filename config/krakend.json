@@ -8,7 +8,7 @@
   "endpoints": [
     {
       "endpoint": "/payments-api/payments",
-      "method": "POST", 
+      "method": "POST",
       "backend": [
         {
           "url_pattern": "/payments",
@@ -19,7 +19,7 @@
     },
     {
       "endpoint": "/payments-api/payments/process/{payment_id}",
-      "method": "POST", 
+      "method": "POST",
       "backend": [
         {
           "url_pattern": "/payments/process/{payment_id}",
@@ -51,6 +51,17 @@
         {
           "url_pattern": "/orders",
           "host": ["http://store_manager:5000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/store-manager-api/test/slow/{delay}",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/test/slow/{delay}",
+          "host": ["http://store_manager:5000"],
+          "timeout": "5s"
         }
       ]
     }

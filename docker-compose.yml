@@ -1,7 +1,7 @@
 services:
   store_manager:
     build: .
-    container_name: store_manager 
+    container_name: store_manager
     environment:
       - PYTHONUNBUFFERED=1
     volumes:
@@ -22,7 +22,10 @@ services:
        - "8089:8089"
      volumes:
        - ./locustfiles:/mnt/locust
-     command: -f /mnt/locust/locustfile.py --host=http://api-gateway:8080
+     #Activité 5 - Rate limiting via KrakenD
+     #command: -f /mnt/locust/locustfile.py --host=http://api-gateway:8080
+     #Activité 7 - Test de charge Store Manager
+     command: -f /mnt/locust/locustfile_charge.py --host=http://store_manager:5000
      depends_on:
       - store_manager
      networks:
