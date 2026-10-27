@@ -1,6 +1,3 @@
-# ============================================================
-# ConfigMap - app environment variables
-# ============================================================
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,8 +5,6 @@ metadata:
 data:
   DB_HOST: mysql
   DB_PORT: "3306"
-  DB_USER: labo05
-  DB_PASSWORD: labo05
   DB_NAME: labo05_db
   REDIS_HOST: redis
   REDIS_PORT: "6379"
@@ -17,15 +12,24 @@ data:
   KAFKA_HOST: ""
 
 ---
-# ============================================================
-# MySQL
-# ============================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+type: Opaque
+stringData:
+  DB_USER: labo05
+  DB_PASSWORD: labo05
+  MYSQL_ROOT_PASSWORD: root
+
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mysql-pvc
 spec:
-  accessModes: [ReadWriteOnce]
+  accessModes:
+    - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
@@ -50,13 +54,25 @@ spec:
           image: mysql:8.4.7
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: root
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: MYSQL_ROOT_PASSWORD
             - name: MYSQL_DATABASE
-              value: labo05_db
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_NAME
             - name: MYSQL_USER
-              value: labo05
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: DB_USER
             - name: MYSQL_PASSWORD
-              value: labo05
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: DB_PASSWORD
           ports:
             - containerPort: 3306
           volumeMounts:
@@ -89,9 +105,6 @@ spec:
     - port: 3306
 
 ---
-# ============================================================
-# Redis
-# ============================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -129,9 +142,6 @@ spec:
     - port: 6379
 
 ---
-# ============================================================
-# store_manager (your app)
-# ============================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -148,14 +158,22 @@ spec:
     spec:
       containers:
         - name: store-manager
-          # TODO: remplacez par VOTRE image publiee sur GHCR
-          #       ex. ghcr.io/<votre-username>/<votre-depot>:latest
-          #       Le paquet doit etre public, sinon voir imagePullSecrets dans kubernetes.md
           image: ghcr.io/log430-a26-eq11/lab05:latest
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: app-config
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: DB_PASSWORD
           ports:
             - containerPort: 5000
 
@@ -165,16 +183,14 @@ kind: Service
 metadata:
   name: store-manager
 spec:
+  type: NodePort
   selector:
     app: store-manager
   ports:
     - port: 5000
-  type: NodePort
+      targetPort: 5000
 
 ---
-# ============================================================
-# KrakenD API Gateway
-# ============================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -209,8 +225,9 @@ kind: Service
 metadata:
   name: api-gateway
 spec:
+  type: NodePort
   selector:
     app: api-gateway
   ports:
     - port: 8080
-  type: NodePort
+      targetPort: 8080
