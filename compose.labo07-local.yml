@@ -1,0 +1,7 @@
+services:
+  store_manager:
+    ports: !override
+      - "127.0.0.1:5001:5000"
+  locust:
+    ports: !override
+      - "127.0.0.1:8091:8089"
